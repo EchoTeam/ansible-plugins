@@ -1,0 +1,2 @@
+CWD=`pwd`
+export ANSIBLE_HOSTS=$CWD/puppetdb.py
