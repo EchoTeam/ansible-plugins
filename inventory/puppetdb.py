@@ -125,9 +125,10 @@ def read_config(file):
     config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), file)
     config.read(config_path)
 
-    url = config.get('puppetdb', 'url')
+    host = config.get('puppetdb', 'host')
+    port = config.get('puppetdb', 'port')
 
-    return url
+    return (host, port)
 
 if __name__ == '__main__':
     usage="%prog [--list] [--host <host>]"
@@ -139,7 +140,9 @@ if __name__ == '__main__':
         default=False, help="get all the variables about a specific hosts")
 
     (options, args) = parser.parse_args()
-    url = read_config(PUPPETDB)
+    (host, port) = read_config(PUPPETDB)
+
+    url = "http://%s:%s/v2/facts/?query=" % (host, port)
 
     if options.list:
         filter = ".+"
