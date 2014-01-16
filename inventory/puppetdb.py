@@ -16,7 +16,7 @@ from optparse import OptionParser
 
 
 PUPPETDB = "puppetdb.ini"
-CACHE_PATH = "/tmp/puppetdb_ansible_plugin_query_cache"
+CACHE_PATH = "/tmp/ansible-puppetdb.cache"
 
 
 def fetch(url, query):
@@ -62,7 +62,7 @@ def inventory(data, hosts_data):
     hostvars = {}
 
     for host in data:
-        service = host['name'][12:] # cut off echoservice
+        service = host['name'][12:] # cut off echoservice_
         hostname = host['certname']
         if not service in services:
             services[service] = [hostname]
@@ -184,22 +184,7 @@ def read_config(file):
             "port": port,
             "expire_cache": expire_cache}
 
-if __name__ == '__main__':
-    usage="%prog [--list] [--host <host>]"
-
-    parser = OptionParser(usage=usage)
-    parser.add_option("", "--list", action="store_true", dest="list",
-        default=False, help="list all hosts")
-    parser.add_option("", "--host", action="store", dest="host",
-        default=False, help="get all the variables about a specific hosts")
-
-    (options, args) = parser.parse_args()
-    config = read_config(PUPPETDB)
-
-    url = "http://%s:%s/v2/facts/?query=" % (config['host'], config['port'])
-
-    result = ""
-
+def fetch_data_cached(config):
     data = {}
     hosts_data = {}
 
@@ -216,6 +201,23 @@ if __name__ == '__main__':
         f = open(CACHE_PATH, 'w')
         json.dump({"data": data, "hosts_data": hosts_data}, f, indent=4)
         f.close()
+    return (data, hosts_data)
+
+if __name__ == '__main__':
+    usage="%prog [--list] [--host <host>]"
+
+    parser = OptionParser(usage=usage)
+    parser.add_option("", "--list", action="store_true", dest="list",
+        default=False, help="list all hosts")
+    parser.add_option("", "--host", action="store", dest="host",
+        default=False, help="get all the variables about a specific hosts")
+
+    (options, args) = parser.parse_args()
+    config = read_config(PUPPETDB)
+
+    url = "http://%s:%s/v2/facts/?query=" % (config['host'], config['port'])
+
+    (data, hosts_data) = fetch_data_cached(config)
 
     if options.list:
         hosts_inv = host_inventory(hosts_data)
