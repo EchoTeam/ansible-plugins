@@ -69,7 +69,8 @@ def inventory(data, hosts_data):
         else:
             services[service] += [hostname]
 
-        hostvars[hostname] = hosts_data[hostname]
+    for host in data:
+        hostvars[hostname] = hosts_data[host['certname']]
     
     meta = {"_meta": {"hostvars" : hostvars}}
 
