@@ -70,7 +70,7 @@ def inventory(data, hosts_data):
             services[service] += [hostname]
 
     for host in data:
-        hostvars[hostname] = hosts_data[host['certname']]
+        hostvars[host['certname']] = hosts_data[host['certname']]
     
     meta = {"_meta": {"hostvars" : hostvars}}
 
@@ -144,9 +144,14 @@ def host_query(hosts):
                  "~^echoservice_"]
     return '''
         ["and",
-            ["or", %s],
-            ["or", %s]]''' % (",".join([host_fact("certname", k) for k in hosts]),
-                                ",".join([host_fact("name", k) for k in sub_facts]))
+            ["in", "certname",
+                ["extract", "certname",
+                    ["select-facts",
+                        ["and",
+                            ["=", "name", "echoenvironment"],
+                            ["=", "value", "staging"]]]]],
+
+            ["or", %s]]''' % (",".join([host_fact("name", k) for k in sub_facts]))
 
 def host_inventory(data):
     def sname(service):
