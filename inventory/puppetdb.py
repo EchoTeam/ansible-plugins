@@ -16,7 +16,7 @@ from optparse import OptionParser
 
 
 PUPPETDB = "puppetdb.ini"
-CACHE_PATH = "ansible-puppetdb.cache"
+CACHE_PATH = "/tmp/ansible-puppetdb.cache"
 
 
 def fetch(url, query):
