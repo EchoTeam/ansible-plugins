@@ -16,7 +16,7 @@ from optparse import OptionParser
 
 
 PUPPETDB = "puppetdb.ini"
-CACHE_PATH = "/tmp/ansible-puppetdb.cache"
+CACHE_PATH = "ansible-puppetdb.cache"
 
 
 def fetch(url, query):
@@ -33,9 +33,7 @@ def fact(key, value):
                 ["=", "name", "%s"],
                 ["=", "value", "%s"]]]]]''' % (key, value)
 
-def query(filter):
-    env = os.environ['ECHO_ENV']
-
+def query(filter, env):
     sub_facts = [("echoenvironment", env)]
     return '''
         ["and",
@@ -113,8 +111,7 @@ def host_fact(k, v):
         return '''
             ["=", "%s", "%s"]''' % (k, v)
 
-def host_query(hosts):
-    env = os.environ['ECHO_ENV']
+def host_query(env):
     sub_facts = ["ec2_ami_id",
                  "ec2_ami_launch_index",
                  "ec2_ami_manifest_path",
@@ -179,17 +176,19 @@ def host_inventory(data):
     return inventory
 
 def read_config(file):
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser.SafeConfigParser({"env" : os.environ['ECHO_ENV']})
     config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), file)
     config.read(config_path)
 
     host = config.get('puppetdb', 'host')
     port = config.get('puppetdb', 'port')
     expire_cache = config.getint('puppetdb', 'expire_cache')
+    env = config.get('puppetdb', 'env')
     
     return {"host": host,
             "port": port,
-            "expire_cache": expire_cache}
+            "expire_cache": expire_cache,
+            "env": env}
 
 def fetch_data_cached(config):
     data = {}
@@ -203,8 +202,8 @@ def fetch_data_cached(config):
         hosts_data = cache_data['hosts_data']
     else:
         filter = ".+"
-        data = fetch(url, query(filter))
-        hosts_data = fetch(url,host_query(hosts(data)))
+        data = fetch(url, query(filter, config['env']))
+        hosts_data = fetch(url, host_query(config['env']))
         f = open(CACHE_PATH, 'w')
         json.dump({"data": data, "hosts_data": hosts_data}, f, indent=4)
         f.close()
