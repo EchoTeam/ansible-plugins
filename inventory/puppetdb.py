@@ -114,6 +114,7 @@ def host_fact(k, v):
             ["=", "%s", "%s"]''' % (k, v)
 
 def host_query(hosts):
+    env = os.environ['ECHO_ENV']
     sub_facts = ["ec2_ami_id",
                  "ec2_ami_launch_index",
                  "ec2_ami_manifest_path",
@@ -149,9 +150,9 @@ def host_query(hosts):
                     ["select-facts",
                         ["and",
                             ["=", "name", "echoenvironment"],
-                            ["=", "value", "staging"]]]]],
+                            ["=", "value", "%s"]]]]],
 
-            ["or", %s]]''' % (",".join([host_fact("name", k) for k in sub_facts]))
+            ["or", %s]]''' % (env, ",".join([host_fact("name", k) for k in sub_facts]))
 
 def host_inventory(data):
     def sname(service):
